@@ -79,6 +79,22 @@ public class FileArticleRepository implements ArticleRepository {
         }
     }
 
+    @Override
+    public Article update(String id, Article article) {
+        lock.writeLock().lock();
+        try {
+            Path file = resolveSafely(id);
+            if (file == null || !Files.isRegularFile(file)) {
+                throw new ArticleNotFoundException(id);
+            }
+            Article toPersist = new Article(id, article.title(), article.content(), article.publishedDate());
+            objectMapper.writeValue(file.toFile(), toPersist);
+            return toPersist;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     private void createStorageDirIfMissing() {
         try {
             Files.createDirectories(storageDir);

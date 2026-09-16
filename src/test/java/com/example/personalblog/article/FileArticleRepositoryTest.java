@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FileArticleRepositoryTest {
 
@@ -128,6 +129,45 @@ class FileArticleRepositoryTest {
         executor.shutdown();
 
         assertThat(repository.findAll()).hasSize(count);
+    }
+
+    @Test
+    void update_overwritesExistingFile() throws Exception {
+        writeArticleFile("abc-123", "Old Title", "Old content", LocalDate.of(2024, 1, 1));
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        Article updated = repository.update("abc-123",
+                new Article(null, "New Title", "New content", LocalDate.of(2024, 2, 2)));
+
+        assertThat(updated.id()).isEqualTo("abc-123");
+        Article reloaded = objectMapper.readValue(tempDir.resolve("abc-123.json").toFile(), Article.class);
+        assertThat(reloaded.title()).isEqualTo("New Title");
+        assertThat(reloaded.content()).isEqualTo("New content");
+        assertThat(reloaded.publishedDate()).isEqualTo(LocalDate.of(2024, 2, 2));
+    }
+
+    @Test
+    void update_throwsArticleNotFoundException_whenIdDoesNotExist() {
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        assertThatThrownBy(() ->
+                repository.update("missing", new Article(null, "T", "C", LocalDate.now())))
+                .isInstanceOf(ArticleNotFoundException.class);
+    }
+
+    @Test
+    void update_throwsArticleNotFoundException_forPathTraversalAttempt() throws Exception {
+        Path outsideFile = tempDir.resolveSibling("secret2.json");
+        Files.writeString(outsideFile, "{}");
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        try {
+            assertThatThrownBy(() ->
+                    repository.update("../secret2", new Article(null, "T", "C", LocalDate.now())))
+                    .isInstanceOf(ArticleNotFoundException.class);
+        } finally {
+            Files.deleteIfExists(outsideFile);
+        }
     }
 
     private void writeArticleFile(String id, String title, String content, LocalDate date) throws IOException {

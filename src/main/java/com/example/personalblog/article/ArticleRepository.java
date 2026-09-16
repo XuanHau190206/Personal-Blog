@@ -10,4 +10,6 @@ public interface ArticleRepository {
     Optional<Article> findById(String id);
 
     Article save(Article article);
+
+    Article update(String id, Article article);
 }
