@@ -2,6 +2,8 @@ package com.example.personalblog.article;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -73,14 +75,18 @@ class FileArticleRepositoryTest {
         assertThat(repository.findById("missing")).isEmpty();
     }
 
-    @Test
-    void findById_returnsEmpty_forPathTraversalAttempt() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../secret", "../../secret", "..\\secret", "..\\..\\secret",
+            "../../../etc/passwd", "/etc/passwd", "C:/Windows/win.ini"
+    })
+    void findById_returnsEmpty_forPathTraversalPayloads(String maliciousId) throws IOException {
         Path outsideFile = tempDir.resolveSibling("secret.json");
         Files.writeString(outsideFile, "{}");
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         try {
-            assertThat(repository.findById("../secret")).isEmpty();
+            assertThat(repository.findById(maliciousId)).isEmpty();
         } finally {
             Files.deleteIfExists(outsideFile);
         }
@@ -155,15 +161,19 @@ class FileArticleRepositoryTest {
                 .isInstanceOf(ArticleNotFoundException.class);
     }
 
-    @Test
-    void update_throwsArticleNotFoundException_forPathTraversalAttempt() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../secret2", "../../secret2", "..\\secret2", "..\\..\\secret2",
+            "../../../etc/passwd", "/etc/passwd", "C:/Windows/win.ini"
+    })
+    void update_throwsArticleNotFoundException_forPathTraversalPayloads(String maliciousId) throws Exception {
         Path outsideFile = tempDir.resolveSibling("secret2.json");
         Files.writeString(outsideFile, "{}");
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         try {
             assertThatThrownBy(() ->
-                    repository.update("../secret2", new Article(null, "T", "C", LocalDate.now())))
+                    repository.update(maliciousId, new Article(null, "T", "C", LocalDate.now())))
                     .isInstanceOf(ArticleNotFoundException.class);
         } finally {
             Files.deleteIfExists(outsideFile);
@@ -188,14 +198,18 @@ class FileArticleRepositoryTest {
                 .isInstanceOf(ArticleNotFoundException.class);
     }
 
-    @Test
-    void delete_throwsArticleNotFoundException_forPathTraversalAttempt() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../secret3", "../../secret3", "..\\secret3", "..\\..\\secret3",
+            "../../../etc/passwd", "/etc/passwd", "C:/Windows/win.ini"
+    })
+    void delete_throwsArticleNotFoundException_forPathTraversalPayloads(String maliciousId) throws Exception {
         Path outsideFile = tempDir.resolveSibling("secret3.json");
         Files.writeString(outsideFile, "{}");
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         try {
-            assertThatThrownBy(() -> repository.delete("../secret3"))
+            assertThatThrownBy(() -> repository.delete(maliciousId))
                     .isInstanceOf(ArticleNotFoundException.class);
             assertThat(Files.exists(outsideFile)).isTrue();
         } finally {
