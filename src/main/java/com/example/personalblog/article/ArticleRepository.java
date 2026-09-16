@@ -12,4 +12,6 @@ public interface ArticleRepository {
     Article save(Article article);
 
     Article update(String id, Article article);
+
+    void delete(String id);
 }

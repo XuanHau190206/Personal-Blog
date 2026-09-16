@@ -95,6 +95,24 @@ public class FileArticleRepository implements ArticleRepository {
         }
     }
 
+    @Override
+    public void delete(String id) {
+        lock.writeLock().lock();
+        try {
+            Path file = resolveSafely(id);
+            if (file == null || !Files.isRegularFile(file)) {
+                throw new ArticleNotFoundException(id);
+            }
+            try {
+                Files.delete(file);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     private void createStorageDirIfMissing() {
         try {
             Files.createDirectories(storageDir);

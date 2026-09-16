@@ -170,6 +170,39 @@ class FileArticleRepositoryTest {
         }
     }
 
+    @Test
+    void delete_removesExistingFile() throws Exception {
+        writeArticleFile("abc-123", "Title", "Content", LocalDate.now());
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        repository.delete("abc-123");
+
+        assertThat(Files.exists(tempDir.resolve("abc-123.json"))).isFalse();
+    }
+
+    @Test
+    void delete_throwsArticleNotFoundException_whenIdDoesNotExist() {
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        assertThatThrownBy(() -> repository.delete("missing"))
+                .isInstanceOf(ArticleNotFoundException.class);
+    }
+
+    @Test
+    void delete_throwsArticleNotFoundException_forPathTraversalAttempt() throws Exception {
+        Path outsideFile = tempDir.resolveSibling("secret3.json");
+        Files.writeString(outsideFile, "{}");
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        try {
+            assertThatThrownBy(() -> repository.delete("../secret3"))
+                    .isInstanceOf(ArticleNotFoundException.class);
+            assertThat(Files.exists(outsideFile)).isTrue();
+        } finally {
+            Files.deleteIfExists(outsideFile);
+        }
+    }
+
     private void writeArticleFile(String id, String title, String content, LocalDate date) throws IOException {
         String json = """
                 {"id":"%s","title":"%s","content":"%s","publishedDate":"%s"}
