@@ -52,4 +52,4 @@ Xem package structure, API contract và các quyết định kiến trúc trong
 - `markdown/` — `MarkdownRenderer` (commonmark) chuyển Markdown → HTML cho trang chi tiết.
 - `config/SecurityConfig` — Spring Security: form login, bảo vệ `/admin/**`, BCrypt.
 
-Project URL :https://github.com/XuanHau190206/Personal-Blog
+Project URL :[https://github.com/XuanHau190206/Personal-Blog](https://roadmap.sh/projects/personal-blog)
