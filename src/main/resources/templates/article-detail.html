@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${article.title}">Article</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-</head>
+<head th:replace="~{layout/base :: head(${article.title})}"></head>
 <body>
 <div th:replace="~{layout/base :: header}"></div>
-<main class="container">
+<main class="container" style="max-width: 800px;">
     <h1 th:text="${article.title}"></h1>
-    <div class="text-muted mb-3" th:text="${article.publishedDate}"></div>
+    <div class="text-muted mb-4" th:text="${article.publishedDate}"></div>
     <div th:utext="${contentHtml}"></div>
 </main>
+<div th:replace="~{layout/base :: footer}"></div>
 </body>
 </html>
