@@ -9,8 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,6 +83,51 @@ class FileArticleRepositoryTest {
         } finally {
             Files.deleteIfExists(outsideFile);
         }
+    }
+
+    @Test
+    void save_writesArticleToNewJsonFile_withGeneratedId() throws Exception {
+        Article toSave = new Article(null, "New Title", "New content", LocalDate.of(2024, 5, 1));
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+
+        Article saved = repository.save(toSave);
+
+        assertThat(saved.id()).isNotBlank();
+        Path expectedFile = tempDir.resolve(saved.id() + ".json");
+        assertThat(Files.exists(expectedFile)).isTrue();
+
+        Article reloaded = objectMapper.readValue(expectedFile.toFile(), Article.class);
+        assertThat(reloaded.title()).isEqualTo("New Title");
+        assertThat(reloaded.content()).isEqualTo("New content");
+    }
+
+    @Test
+    void save_createsStorageDirectory_whenMissing() {
+        Path missingDir = tempDir.resolve("does-not-exist-yet");
+        FileArticleRepository repository = new FileArticleRepository(missingDir.toString(), objectMapper);
+
+        Article saved = repository.save(new Article(null, "Title", "Content", LocalDate.now()));
+
+        assertThat(Files.exists(missingDir.resolve(saved.id() + ".json"))).isTrue();
+    }
+
+    @Test
+    void save_allowsConcurrentWrites_withoutCorruption() throws Exception {
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+        int count = 20;
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        List<Future<Article>> futures = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            int index = i;
+            futures.add(executor.submit(() ->
+                    repository.save(new Article(null, "Title " + index, "Content " + index, LocalDate.now()))));
+        }
+        for (Future<Article> future : futures) {
+            future.get();
+        }
+        executor.shutdown();
+
+        assertThat(repository.findAll()).hasSize(count);
     }
 
     private void writeArticleFile(String id, String title, String content, LocalDate date) throws IOException {

@@ -8,4 +8,6 @@ public interface ArticleRepository {
     List<Article> findAll();
 
     Optional<Article> findById(String id);
+
+    Article save(Article article);
 }
