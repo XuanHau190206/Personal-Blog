@@ -137,4 +137,22 @@ class ArticleServiceTest {
         assertThatThrownBy(() -> service.update("id1", form)).isInstanceOf(InvalidArticleException.class);
         verifyNoInteractions(articleRepository);
     }
+
+    @Test
+    void delete_delegatesToRepository() {
+        ArticleService service = new ArticleService(articleRepository);
+
+        service.delete("id1");
+
+        verify(articleRepository).delete("id1");
+    }
+
+    @Test
+    void delete_propagatesArticleNotFoundException() {
+        org.mockito.Mockito.doThrow(new ArticleNotFoundException("missing"))
+                .when(articleRepository).delete("missing");
+        ArticleService service = new ArticleService(articleRepository);
+
+        assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ArticleNotFoundException.class);
+    }
 }

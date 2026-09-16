@@ -38,6 +38,10 @@ public class ArticleService {
         return articleRepository.update(id, toSave);
     }
 
+    public void delete(String id) {
+        articleRepository.delete(id);
+    }
+
     private void validate(String title, String content) {
         if (title == null || title.isBlank()) {
             throw new InvalidArticleException("Title must not be blank");
