@@ -14,6 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -90,6 +92,49 @@ class ArticleServiceTest {
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.create(form)).isInstanceOf(InvalidArticleException.class);
+        verifyNoInteractions(articleRepository);
+    }
+
+    @Test
+    void update_savesArticle_whenValid() {
+        ArticleFormDto form = new ArticleFormDto("Updated", LocalDate.of(2024, 3, 3), "Updated content");
+        Article updated = new Article("id1", "Updated", "Updated content", LocalDate.of(2024, 3, 3));
+        when(articleRepository.update(eq("id1"), any())).thenReturn(updated);
+        ArticleService service = new ArticleService(articleRepository);
+
+        Article result = service.update("id1", form);
+
+        assertThat(result).isEqualTo(updated);
+        verify(articleRepository).update(eq("id1"), argThat(a ->
+                a.title().equals("Updated") && a.content().equals("Updated content")));
+    }
+
+    @Test
+    void update_defaultsPublishedDateToToday_whenNull() {
+        ArticleFormDto form = new ArticleFormDto("Title", null, "Content");
+        when(articleRepository.update(eq("id1"), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        ArticleService service = new ArticleService(articleRepository);
+
+        Article result = service.update("id1", form);
+
+        assertThat(result.publishedDate()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void update_throwsInvalidArticleException_whenTitleBlank() {
+        ArticleFormDto form = new ArticleFormDto("   ", LocalDate.now(), "Content");
+        ArticleService service = new ArticleService(articleRepository);
+
+        assertThatThrownBy(() -> service.update("id1", form)).isInstanceOf(InvalidArticleException.class);
+        verifyNoInteractions(articleRepository);
+    }
+
+    @Test
+    void update_throwsInvalidArticleException_whenContentBlank() {
+        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "   ");
+        ArticleService service = new ArticleService(articleRepository);
+
+        assertThatThrownBy(() -> service.update("id1", form)).isInstanceOf(InvalidArticleException.class);
         verifyNoInteractions(articleRepository);
     }
 }

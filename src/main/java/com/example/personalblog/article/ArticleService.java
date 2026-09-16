@@ -31,6 +31,13 @@ public class ArticleService {
         return articleRepository.save(toSave);
     }
 
+    public Article update(String id, ArticleFormDto form) {
+        validate(form.title(), form.content());
+        LocalDate publishedDate = form.publishedDate() != null ? form.publishedDate() : LocalDate.now();
+        Article toSave = new Article(null, form.title(), form.content(), publishedDate);
+        return articleRepository.update(id, toSave);
+    }
+
     private void validate(String title, String content) {
         if (title == null || title.isBlank()) {
             throw new InvalidArticleException("Title must not be blank");
