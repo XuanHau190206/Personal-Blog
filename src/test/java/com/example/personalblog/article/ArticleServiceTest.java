@@ -155,4 +155,57 @@ class ArticleServiceTest {
 
         assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ArticleNotFoundException.class);
     }
+
+    @Test
+    void listPublished_cachesResult_untilInvalidated() {
+        when(articleRepository.findAll()).thenReturn(List.of());
+        ArticleService service = new ArticleService(articleRepository);
+
+        service.listPublished();
+        service.listPublished();
+        service.listPublished();
+
+        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(1)).findAll();
+    }
+
+    @Test
+    void create_invalidatesCache() {
+        when(articleRepository.findAll()).thenReturn(List.of());
+        when(articleRepository.save(any())).thenReturn(new Article("id1", "Title", "Content", LocalDate.now()));
+        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "Content");
+        ArticleService service = new ArticleService(articleRepository);
+
+        service.listPublished();
+        service.create(form);
+        service.listPublished();
+
+        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+    }
+
+    @Test
+    void update_invalidatesCache() {
+        when(articleRepository.findAll()).thenReturn(List.of());
+        when(articleRepository.update(eq("id1"), any()))
+                .thenReturn(new Article("id1", "Title", "Content", LocalDate.now()));
+        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "Content");
+        ArticleService service = new ArticleService(articleRepository);
+
+        service.listPublished();
+        service.update("id1", form);
+        service.listPublished();
+
+        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+    }
+
+    @Test
+    void delete_invalidatesCache() {
+        when(articleRepository.findAll()).thenReturn(List.of());
+        ArticleService service = new ArticleService(articleRepository);
+
+        service.listPublished();
+        service.delete("id1");
+        service.listPublished();
+
+        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+    }
 }

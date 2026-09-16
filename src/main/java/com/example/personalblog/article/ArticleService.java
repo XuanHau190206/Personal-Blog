@@ -5,18 +5,25 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
+    private final AtomicReference<List<Article>> listCache = new AtomicReference<>();
 
     public ArticleService(ArticleRepository articleRepository) {
         this.articleRepository = articleRepository;
     }
 
     public List<Article> listPublished() {
-        return articleRepository.findAll();
+        List<Article> cached = listCache.get();
+        if (cached == null) {
+            cached = articleRepository.findAll();
+            listCache.set(cached);
+        }
+        return cached;
     }
 
     public Article getById(String id) {
@@ -28,18 +35,23 @@ public class ArticleService {
         validate(form.title(), form.content());
         LocalDate publishedDate = form.publishedDate() != null ? form.publishedDate() : LocalDate.now();
         Article toSave = new Article(null, form.title(), form.content(), publishedDate);
-        return articleRepository.save(toSave);
+        Article saved = articleRepository.save(toSave);
+        listCache.set(null);
+        return saved;
     }
 
     public Article update(String id, ArticleFormDto form) {
         validate(form.title(), form.content());
         LocalDate publishedDate = form.publishedDate() != null ? form.publishedDate() : LocalDate.now();
         Article toSave = new Article(null, form.title(), form.content(), publishedDate);
-        return articleRepository.update(id, toSave);
+        Article updated = articleRepository.update(id, toSave);
+        listCache.set(null);
+        return updated;
     }
 
     public void delete(String id) {
         articleRepository.delete(id);
+        listCache.set(null);
     }
 
     private void validate(String title, String content) {
