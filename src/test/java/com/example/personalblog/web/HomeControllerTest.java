@@ -49,4 +49,14 @@ class HomeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Chưa có bài viết nào được xuất bản.")));
     }
+
+    @Test
+    void home_showsPostButton_linkingToArticleCreationPage() throws Exception {
+        when(articleService.listPublished()).thenReturn(List.of());
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Post")))
+                .andExpect(content().string(containsString("/admin/articles/new")));
+    }
 }

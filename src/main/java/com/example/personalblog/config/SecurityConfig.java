@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/admin", true)
+                        .defaultSuccessUrl("/admin")
                         .permitAll())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")
