@@ -9,7 +9,9 @@
 <div th:replace="~{layout/base :: header}"></div>
 <main class="container" style="max-width: 600px;">
     <h1>Bài viết</h1>
-    <form method="post" th:action="@{/admin/articles}" th:object="${articleForm}">
+    <form method="post"
+          th:action="${articleId} != null ? @{/admin/articles/{id}(id=${articleId})} : @{/admin/articles}"
+          th:object="${articleForm}">
         <div class="mb-3">
             <label for="title" class="form-label">Tiêu đề</label>
             <input type="text" class="form-control" id="title" th:field="*{title}">
