@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -215,6 +216,51 @@ class FileArticleRepositoryTest {
         } finally {
             Files.deleteIfExists(outsideFile);
         }
+    }
+
+    @Test
+    void concurrentReadsAndWrites_neverThrowOrCorruptData() throws Exception {
+        FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
+        Article seed = repository.save(new Article(null, "Seed", "Seed content", LocalDate.now()));
+
+        int readerCount = 4;
+        int writerCount = 4;
+        int iterationsPerThread = 50;
+        ExecutorService executor = Executors.newFixedThreadPool(readerCount + writerCount);
+        List<Future<?>> futures = new ArrayList<>();
+        AtomicInteger errors = new AtomicInteger(0);
+
+        for (int i = 0; i < readerCount; i++) {
+            futures.add(executor.submit(() -> {
+                for (int j = 0; j < iterationsPerThread; j++) {
+                    try {
+                        repository.findAll();
+                        repository.findById(seed.id());
+                    } catch (Exception e) {
+                        errors.incrementAndGet();
+                    }
+                }
+            }));
+        }
+        for (int i = 0; i < writerCount; i++) {
+            int writerIndex = i;
+            futures.add(executor.submit(() -> {
+                for (int j = 0; j < iterationsPerThread; j++) {
+                    try {
+                        repository.update(seed.id(),
+                                new Article(null, "Title " + writerIndex + "-" + j, "Content " + j, LocalDate.now()));
+                    } catch (Exception e) {
+                        errors.incrementAndGet();
+                    }
+                }
+            }));
+        }
+        for (Future<?> future : futures) {
+            future.get();
+        }
+        executor.shutdown();
+
+        assertThat(errors.get()).isZero();
     }
 
     private void writeArticleFile(String id, String title, String content, LocalDate date) throws IOException {
