@@ -59,4 +59,10 @@ public class ArticleAdminController {
         articleService.update(id, form);
         return "redirect:/admin";
     }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable String id) {
+        articleService.delete(id);
+        return "redirect:/admin";
+    }
 }

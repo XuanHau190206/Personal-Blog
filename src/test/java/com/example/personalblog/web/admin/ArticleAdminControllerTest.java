@@ -143,4 +143,24 @@ class ArticleAdminControllerTest {
 
         verify(articleService, never()).update(any(), any());
     }
+
+    @Test
+    @WithMockUser
+    void delete_removesArticleAndRedirectsToAdmin() throws Exception {
+        mockMvc.perform(post("/admin/articles/id1/delete").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"));
+
+        verify(articleService).delete("id1");
+    }
+
+    @Test
+    @WithMockUser
+    void delete_returns404_whenArticleNotFound() throws Exception {
+        org.mockito.Mockito.doThrow(new ArticleNotFoundException("missing"))
+                .when(articleService).delete("missing");
+
+        mockMvc.perform(post("/admin/articles/missing/delete").with(csrf()))
+                .andExpect(status().isNotFound());
+    }
 }
