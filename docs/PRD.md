@@ -90,7 +90,7 @@ Tôi muốn tạo một bài viết mới thông qua một Form điền liệu,
 
 Tiêu chí chấp nhận:
 
-Click "Add New Article" mở ra trang có form gồm các trường: Tiêu đề (Input text), Ngày xuất bản (Date picker hoặc nhập text), Nội dung (Textarea rộng).
+Click "Add New Article" mở ra trang có form gồm các trường: Tiêu đề (Input text), Nội dung (Textarea rộng). Ngày xuất bản không phải là trường trên form — hệ thống tự động gán ngày hiện tại khi tạo bài viết và giữ nguyên khi chỉnh sửa sau này (admin không tự chọn hoặc sửa được ngày xuất bản).
 
 Khi submit form thành công, backend sẽ tạo ra một file mới (ví dụ .md hoặc .json) lưu vào thư mục lưu trữ của hệ thống.
 
@@ -107,7 +107,7 @@ Tiêu chí chấp nhận:
 
 Click nút "Edit" tại Dashboard sẽ mở ra trang form sửa bài viết.
 
-Các trường (Tiêu đề, Ngày, Nội dung) phải được tự động điền sẵn (pre-filled) dữ liệu hiện tại của bài viết đó.
+Các trường có thể sửa (Tiêu đề, Nội dung) phải được tự động điền sẵn (pre-filled) dữ liệu hiện tại của bài viết đó. Ngày xuất bản hiển thị chỉ để tham khảo (read-only), không đổi được khi sửa bài.
 
 Khi submit, backend sẽ ghi đè nội dung mới lên file cũ lưu trên ổ cứng.
 
