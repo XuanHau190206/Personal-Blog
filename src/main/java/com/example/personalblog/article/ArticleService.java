@@ -33,8 +33,7 @@ public class ArticleService {
 
     public Article create(ArticleFormDto form) {
         validate(form.title(), form.content());
-        LocalDate publishedDate = form.publishedDate() != null ? form.publishedDate() : LocalDate.now();
-        Article toSave = new Article(null, form.title(), form.content(), publishedDate);
+        Article toSave = new Article(null, form.title(), form.content(), LocalDate.now());
         Article saved = articleRepository.save(toSave);
         listCache.set(null);
         return saved;
@@ -42,8 +41,8 @@ public class ArticleService {
 
     public Article update(String id, ArticleFormDto form) {
         validate(form.title(), form.content());
-        LocalDate publishedDate = form.publishedDate() != null ? form.publishedDate() : LocalDate.now();
-        Article toSave = new Article(null, form.title(), form.content(), publishedDate);
+        Article existing = getById(id);
+        Article toSave = new Article(null, form.title(), form.content(), existing.publishedDate());
         Article updated = articleRepository.update(id, toSave);
         listCache.set(null);
         return updated;

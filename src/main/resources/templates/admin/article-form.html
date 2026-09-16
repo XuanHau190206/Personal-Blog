@@ -13,9 +13,9 @@
             <input type="text" class="form-control" id="title" th:field="*{title}">
             <div class="text-danger" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
         </div>
-        <div class="mb-3">
-            <label for="publishedDate" class="form-label">Ngày xuất bản</label>
-            <input type="date" class="form-control" id="publishedDate" th:field="*{publishedDate}">
+        <div class="mb-3" th:if="${publishedDate} != null">
+            <label class="form-label">Ngày xuất bản</label>
+            <p class="form-control-plaintext" th:text="${publishedDate}"></p>
         </div>
         <div class="mb-3">
             <label for="content" class="form-label">Nội dung</label>

@@ -15,6 +15,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -54,21 +56,21 @@ class ArticleServiceTest {
 
     @Test
     void create_savesArticle_whenValid() {
-        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.of(2024, 1, 1), "Content");
-        Article saved = new Article("id1", "Title", "Content", LocalDate.of(2024, 1, 1));
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
+        Article saved = new Article("id1", "Title", "Content", LocalDate.now());
         when(articleRepository.save(any())).thenReturn(saved);
         ArticleService service = new ArticleService(articleRepository);
 
         Article result = service.create(form);
 
         assertThat(result).isEqualTo(saved);
-        org.mockito.Mockito.verify(articleRepository).save(argThat(a ->
+        verify(articleRepository).save(argThat(a ->
                 a.title().equals("Title") && a.content().equals("Content")));
     }
 
     @Test
-    void create_defaultsPublishedDateToToday_whenNull() {
-        ArticleFormDto form = new ArticleFormDto("Title", null, "Content");
+    void create_usesCurrentDateAsPublishedDate() {
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
         when(articleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         ArticleService service = new ArticleService(articleRepository);
 
@@ -79,7 +81,7 @@ class ArticleServiceTest {
 
     @Test
     void create_throwsInvalidArticleException_whenTitleBlank() {
-        ArticleFormDto form = new ArticleFormDto("   ", LocalDate.now(), "Content");
+        ArticleFormDto form = new ArticleFormDto("   ", "Content");
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.create(form)).isInstanceOf(InvalidArticleException.class);
@@ -88,7 +90,7 @@ class ArticleServiceTest {
 
     @Test
     void create_throwsInvalidArticleException_whenContentBlank() {
-        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "   ");
+        ArticleFormDto form = new ArticleFormDto("Title", "   ");
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.create(form)).isInstanceOf(InvalidArticleException.class);
@@ -97,8 +99,10 @@ class ArticleServiceTest {
 
     @Test
     void update_savesArticle_whenValid() {
-        ArticleFormDto form = new ArticleFormDto("Updated", LocalDate.of(2024, 3, 3), "Updated content");
-        Article updated = new Article("id1", "Updated", "Updated content", LocalDate.of(2024, 3, 3));
+        Article existing = new Article("id1", "Old Title", "Old content", LocalDate.of(2024, 1, 1));
+        when(articleRepository.findById("id1")).thenReturn(Optional.of(existing));
+        ArticleFormDto form = new ArticleFormDto("Updated", "Updated content");
+        Article updated = new Article("id1", "Updated", "Updated content", LocalDate.of(2024, 1, 1));
         when(articleRepository.update(eq("id1"), any())).thenReturn(updated);
         ArticleService service = new ArticleService(articleRepository);
 
@@ -110,19 +114,30 @@ class ArticleServiceTest {
     }
 
     @Test
-    void update_defaultsPublishedDateToToday_whenNull() {
-        ArticleFormDto form = new ArticleFormDto("Title", null, "Content");
+    void update_preservesOriginalPublishedDate() {
+        Article existing = new Article("id1", "Old Title", "Old content", LocalDate.of(2024, 1, 1));
+        when(articleRepository.findById("id1")).thenReturn(Optional.of(existing));
         when(articleRepository.update(eq("id1"), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
         ArticleService service = new ArticleService(articleRepository);
 
         Article result = service.update("id1", form);
 
-        assertThat(result.publishedDate()).isEqualTo(LocalDate.now());
+        assertThat(result.publishedDate()).isEqualTo(LocalDate.of(2024, 1, 1));
+    }
+
+    @Test
+    void update_throwsArticleNotFoundException_whenIdDoesNotExist() {
+        when(articleRepository.findById("missing")).thenReturn(Optional.empty());
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
+        ArticleService service = new ArticleService(articleRepository);
+
+        assertThatThrownBy(() -> service.update("missing", form)).isInstanceOf(ArticleNotFoundException.class);
     }
 
     @Test
     void update_throwsInvalidArticleException_whenTitleBlank() {
-        ArticleFormDto form = new ArticleFormDto("   ", LocalDate.now(), "Content");
+        ArticleFormDto form = new ArticleFormDto("   ", "Content");
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.update("id1", form)).isInstanceOf(InvalidArticleException.class);
@@ -131,7 +146,7 @@ class ArticleServiceTest {
 
     @Test
     void update_throwsInvalidArticleException_whenContentBlank() {
-        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "   ");
+        ArticleFormDto form = new ArticleFormDto("Title", "   ");
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.update("id1", form)).isInstanceOf(InvalidArticleException.class);
@@ -149,8 +164,7 @@ class ArticleServiceTest {
 
     @Test
     void delete_propagatesArticleNotFoundException() {
-        org.mockito.Mockito.doThrow(new ArticleNotFoundException("missing"))
-                .when(articleRepository).delete("missing");
+        doThrow(new ArticleNotFoundException("missing")).when(articleRepository).delete("missing");
         ArticleService service = new ArticleService(articleRepository);
 
         assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ArticleNotFoundException.class);
@@ -165,36 +179,38 @@ class ArticleServiceTest {
         service.listPublished();
         service.listPublished();
 
-        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(1)).findAll();
+        verify(articleRepository, times(1)).findAll();
     }
 
     @Test
     void create_invalidatesCache() {
         when(articleRepository.findAll()).thenReturn(List.of());
         when(articleRepository.save(any())).thenReturn(new Article("id1", "Title", "Content", LocalDate.now()));
-        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "Content");
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
         ArticleService service = new ArticleService(articleRepository);
 
         service.listPublished();
         service.create(form);
         service.listPublished();
 
-        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+        verify(articleRepository, times(2)).findAll();
     }
 
     @Test
     void update_invalidatesCache() {
         when(articleRepository.findAll()).thenReturn(List.of());
+        when(articleRepository.findById("id1"))
+                .thenReturn(Optional.of(new Article("id1", "Old", "Old content", LocalDate.now())));
         when(articleRepository.update(eq("id1"), any()))
                 .thenReturn(new Article("id1", "Title", "Content", LocalDate.now()));
-        ArticleFormDto form = new ArticleFormDto("Title", LocalDate.now(), "Content");
+        ArticleFormDto form = new ArticleFormDto("Title", "Content");
         ArticleService service = new ArticleService(articleRepository);
 
         service.listPublished();
         service.update("id1", form);
         service.listPublished();
 
-        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+        verify(articleRepository, times(2)).findAll();
     }
 
     @Test
@@ -206,6 +222,6 @@ class ArticleServiceTest {
         service.delete("id1");
         service.listPublished();
 
-        org.mockito.Mockito.verify(articleRepository, org.mockito.Mockito.times(2)).findAll();
+        verify(articleRepository, times(2)).findAll();
     }
 }

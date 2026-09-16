@@ -69,7 +69,6 @@ class ArticleAdminControllerTest {
         mockMvc.perform(post("/admin/articles")
                         .with(csrf())
                         .param("title", "Title")
-                        .param("publishedDate", "2024-01-01")
                         .param("content", "Content"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
@@ -83,7 +82,6 @@ class ArticleAdminControllerTest {
         mockMvc.perform(post("/admin/articles")
                         .with(csrf())
                         .param("title", "")
-                        .param("publishedDate", "2024-01-01")
                         .param("content", "Content"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/article-form"));
@@ -122,7 +120,6 @@ class ArticleAdminControllerTest {
         mockMvc.perform(post("/admin/articles/id1")
                         .with(csrf())
                         .param("title", "New Title")
-                        .param("publishedDate", "2024-02-02")
                         .param("content", "New content"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
@@ -136,7 +133,6 @@ class ArticleAdminControllerTest {
         mockMvc.perform(post("/admin/articles/id1")
                         .with(csrf())
                         .param("title", "Title")
-                        .param("publishedDate", "2024-02-02")
                         .param("content", ""))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/article-form"));

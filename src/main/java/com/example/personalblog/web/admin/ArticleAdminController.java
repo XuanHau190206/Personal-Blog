@@ -25,7 +25,7 @@ public class ArticleAdminController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("articleForm", new ArticleFormDto(null, null, null));
+        model.addAttribute("articleForm", new ArticleFormDto(null, null));
         return "admin/article-form";
     }
 
@@ -41,9 +41,9 @@ public class ArticleAdminController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable String id, Model model) {
         Article article = articleService.getById(id);
-        model.addAttribute("articleForm",
-                new ArticleFormDto(article.title(), article.publishedDate(), article.content()));
+        model.addAttribute("articleForm", new ArticleFormDto(article.title(), article.content()));
         model.addAttribute("articleId", id);
+        model.addAttribute("publishedDate", article.publishedDate());
         return "admin/article-form";
     }
 
