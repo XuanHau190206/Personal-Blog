@@ -51,3 +51,5 @@ Xem package structure, API contract và các quyết định kiến trúc trong
 - `article/` — `ArticleService` (business rules, cache), `FileArticleRepository` (I/O file JSON, khoá ghi, chặn path traversal).
 - `markdown/` — `MarkdownRenderer` (commonmark) chuyển Markdown → HTML cho trang chi tiết.
 - `config/SecurityConfig` — Spring Security: form login, bảo vệ `/admin/**`, BCrypt.
+
+Project URL :https://github.com/XuanHau190206/Personal-Blog
