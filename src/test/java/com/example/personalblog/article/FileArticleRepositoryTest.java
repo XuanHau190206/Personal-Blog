@@ -67,6 +67,7 @@ class FileArticleRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().title()).isEqualTo("Hello");
         assertThat(found.get().content()).isEqualTo("World");
+        assertThat(found.get().author()).isEqualTo("Admin");
     }
 
     @Test
@@ -95,7 +96,7 @@ class FileArticleRepositoryTest {
 
     @Test
     void save_writesArticleToNewJsonFile_withGeneratedId() throws Exception {
-        Article toSave = new Article(null, "New Title", "New content", LocalDate.of(2024, 5, 1));
+        Article toSave = new Article(null, "New Title", "New content", LocalDate.of(2024, 5, 1), "Admin");
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         Article saved = repository.save(toSave);
@@ -107,6 +108,7 @@ class FileArticleRepositoryTest {
         Article reloaded = objectMapper.readValue(expectedFile.toFile(), Article.class);
         assertThat(reloaded.title()).isEqualTo("New Title");
         assertThat(reloaded.content()).isEqualTo("New content");
+        assertThat(reloaded.author()).isEqualTo("Admin");
     }
 
     @Test
@@ -114,7 +116,7 @@ class FileArticleRepositoryTest {
         Path missingDir = tempDir.resolve("does-not-exist-yet");
         FileArticleRepository repository = new FileArticleRepository(missingDir.toString(), objectMapper);
 
-        Article saved = repository.save(new Article(null, "Title", "Content", LocalDate.now()));
+        Article saved = repository.save(new Article(null, "Title", "Content", LocalDate.now(), "Admin"));
 
         assertThat(Files.exists(missingDir.resolve(saved.id() + ".json"))).isTrue();
     }
@@ -128,7 +130,7 @@ class FileArticleRepositoryTest {
         for (int i = 0; i < count; i++) {
             int index = i;
             futures.add(executor.submit(() ->
-                    repository.save(new Article(null, "Title " + index, "Content " + index, LocalDate.now()))));
+                    repository.save(new Article(null, "Title " + index, "Content " + index, LocalDate.now(), "Admin"))));
         }
         for (Future<Article> future : futures) {
             future.get();
@@ -144,13 +146,14 @@ class FileArticleRepositoryTest {
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         Article updated = repository.update("abc-123",
-                new Article(null, "New Title", "New content", LocalDate.of(2024, 2, 2)));
+                new Article(null, "New Title", "New content", LocalDate.of(2024, 2, 2), "Admin"));
 
         assertThat(updated.id()).isEqualTo("abc-123");
         Article reloaded = objectMapper.readValue(tempDir.resolve("abc-123.json").toFile(), Article.class);
         assertThat(reloaded.title()).isEqualTo("New Title");
         assertThat(reloaded.content()).isEqualTo("New content");
         assertThat(reloaded.publishedDate()).isEqualTo(LocalDate.of(2024, 2, 2));
+        assertThat(reloaded.author()).isEqualTo("Admin");
     }
 
     @Test
@@ -158,7 +161,7 @@ class FileArticleRepositoryTest {
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
 
         assertThatThrownBy(() ->
-                repository.update("missing", new Article(null, "T", "C", LocalDate.now())))
+                repository.update("missing", new Article(null, "T", "C", LocalDate.now(), "Admin")))
                 .isInstanceOf(ArticleNotFoundException.class);
     }
 
@@ -174,7 +177,7 @@ class FileArticleRepositoryTest {
 
         try {
             assertThatThrownBy(() ->
-                    repository.update(maliciousId, new Article(null, "T", "C", LocalDate.now())))
+                    repository.update(maliciousId, new Article(null, "T", "C", LocalDate.now(), "Admin")))
                     .isInstanceOf(ArticleNotFoundException.class);
         } finally {
             Files.deleteIfExists(outsideFile);
@@ -221,7 +224,7 @@ class FileArticleRepositoryTest {
     @Test
     void concurrentReadsAndWrites_neverThrowOrCorruptData() throws Exception {
         FileArticleRepository repository = new FileArticleRepository(tempDir.toString(), objectMapper);
-        Article seed = repository.save(new Article(null, "Seed", "Seed content", LocalDate.now()));
+        Article seed = repository.save(new Article(null, "Seed", "Seed content", LocalDate.now(), "Admin"));
 
         int readerCount = 4;
         int writerCount = 4;
@@ -248,7 +251,7 @@ class FileArticleRepositoryTest {
                 for (int j = 0; j < iterationsPerThread; j++) {
                     try {
                         repository.update(seed.id(),
-                                new Article(null, "Title " + writerIndex + "-" + j, "Content " + j, LocalDate.now()));
+                                new Article(null, "Title " + writerIndex + "-" + j, "Content " + j, LocalDate.now(), "Admin"));
                     } catch (Exception e) {
                         errors.incrementAndGet();
                     }
@@ -265,7 +268,7 @@ class FileArticleRepositoryTest {
 
     private void writeArticleFile(String id, String title, String content, LocalDate date) throws IOException {
         String json = """
-                {"id":"%s","title":"%s","content":"%s","publishedDate":"%s"}
+                {"id":"%s","title":"%s","content":"%s","publishedDate":"%s","author":"Admin"}
                 """.formatted(id, title, content, date);
         Files.writeString(tempDir.resolve(id + ".json"), json);
     }

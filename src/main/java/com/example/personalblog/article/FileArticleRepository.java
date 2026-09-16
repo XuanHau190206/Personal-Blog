@@ -70,7 +70,7 @@ public class FileArticleRepository implements ArticleRepository {
         try {
             createStorageDirIfMissing();
             String id = UUID.randomUUID().toString();
-            Article toPersist = new Article(id, article.title(), article.content(), article.publishedDate());
+            Article toPersist = new Article(id, article.title(), article.content(), article.publishedDate(), article.author());
             Path file = storageDir.resolve(id + ".json");
             objectMapper.writeValue(file.toFile(), toPersist);
             return toPersist;
@@ -87,7 +87,7 @@ public class FileArticleRepository implements ArticleRepository {
             if (file == null || !Files.isRegularFile(file)) {
                 throw new ArticleNotFoundException(id);
             }
-            Article toPersist = new Article(id, article.title(), article.content(), article.publishedDate());
+            Article toPersist = new Article(id, article.title(), article.content(), article.publishedDate(), article.author());
             objectMapper.writeValue(file.toFile(), toPersist);
             return toPersist;
         } finally {

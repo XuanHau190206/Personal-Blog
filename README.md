@@ -30,6 +30,12 @@ jshell --class-path <path-to-spring-security-crypto.jar> -q -
 System.out.println(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("mat-khau-moi"));
 ```
 
+## Tác giả bài viết
+
+Tên tác giả gắn tự động cho mọi bài viết mới lấy từ `blog.author.name` trong
+`application.properties` (mặc định `Admin`). Không phải trường trên form — sửa bài viết
+đã có không đổi được tác giả gốc.
+
 ## Lưu trữ bài viết
 
 Mỗi bài viết là 1 file JSON tại `data/articles/{uuid}.json` (thư mục này bị `.gitignore`,

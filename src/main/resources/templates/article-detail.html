@@ -5,7 +5,9 @@
 <div th:replace="~{layout/base :: header}"></div>
 <main class="container" style="max-width: 800px;">
     <h1 th:text="${article.title}"></h1>
-    <div class="text-muted mb-4" th:text="${article.publishedDate}"></div>
+    <div class="text-muted mb-4">
+        <span th:text="${article.author}"></span> &middot; <span th:text="${article.publishedDate}"></span>
+    </div>
     <div th:utext="${contentHtml}"></div>
 </main>
 <div th:replace="~{layout/base :: footer}"></div>

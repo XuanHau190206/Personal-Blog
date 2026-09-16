@@ -47,7 +47,7 @@ class DashboardControllerTest {
     @Test
     @WithMockUser
     void dashboard_showsArticleTable_whenAuthenticated() throws Exception {
-        Article article = new Article("id1", "Hello World", "content", LocalDate.of(2024, 1, 1));
+        Article article = new Article("id1", "Hello World", "content", LocalDate.of(2024, 1, 1), "Admin");
         when(articleService.listPublished()).thenReturn(List.of(article));
 
         mockMvc.perform(get("/admin"))

@@ -63,7 +63,7 @@ class ArticleAdminControllerTest {
     @Test
     @WithMockUser
     void create_withValidData_redirectsToAdmin() throws Exception {
-        Article saved = new Article("id1", "Title", "Content", LocalDate.of(2024, 1, 1));
+        Article saved = new Article("id1", "Title", "Content", LocalDate.of(2024, 1, 1), "Admin");
         when(articleService.create(any())).thenReturn(saved);
 
         mockMvc.perform(post("/admin/articles")
@@ -92,7 +92,7 @@ class ArticleAdminControllerTest {
     @Test
     @WithMockUser
     void editForm_prefillsExistingArticle() throws Exception {
-        Article article = new Article("id1", "Existing Title", "Existing content", LocalDate.of(2024, 1, 1));
+        Article article = new Article("id1", "Existing Title", "Existing content", LocalDate.of(2024, 1, 1), "Admin");
         when(articleService.getById("id1")).thenReturn(article);
 
         mockMvc.perform(get("/admin/articles/id1/edit"))
@@ -114,7 +114,7 @@ class ArticleAdminControllerTest {
     @Test
     @WithMockUser
     void update_withValidData_redirectsToAdmin() throws Exception {
-        Article updated = new Article("id1", "New Title", "New content", LocalDate.of(2024, 2, 2));
+        Article updated = new Article("id1", "New Title", "New content", LocalDate.of(2024, 2, 2), "Admin");
         when(articleService.update(eq("id1"), any())).thenReturn(updated);
 
         mockMvc.perform(post("/admin/articles/id1")

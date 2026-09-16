@@ -32,7 +32,7 @@ class ArticleControllerTest {
 
     @Test
     void detail_showsArticle_whenFound() throws Exception {
-        Article article = new Article("id1", "Hello World", "**bold** content", LocalDate.of(2024, 1, 1));
+        Article article = new Article("id1", "Hello World", "**bold** content", LocalDate.of(2024, 1, 1), "Admin");
         when(articleService.getById("id1")).thenReturn(article);
 
         mockMvc.perform(get("/article/id1"))

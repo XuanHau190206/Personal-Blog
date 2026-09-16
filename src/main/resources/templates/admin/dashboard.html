@@ -17,6 +17,7 @@
         <thead>
         <tr>
             <th>Tiêu đề</th>
+            <th>Tác giả</th>
             <th>Ngày xuất bản</th>
             <th>Hành động</th>
         </tr>
@@ -24,6 +25,7 @@
         <tbody>
         <tr th:each="article : ${articles}">
             <td th:text="${article.title}"></td>
+            <td th:text="${article.author}"></td>
             <td th:text="${article.publishedDate}"></td>
             <td>
                 <a class="btn btn-sm btn-secondary" th:href="@{/admin/articles/{id}/edit(id=${article.id})}">Edit</a>
