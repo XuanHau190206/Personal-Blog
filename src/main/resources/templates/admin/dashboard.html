@@ -8,10 +8,37 @@
 <body>
 <div th:replace="~{layout/base :: header}"></div>
 <main class="container">
-    <h1>Dashboard</h1>
-    <form method="post" th:action="@{/logout}">
-        <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
-    </form>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Dashboard</h1>
+        <div>
+            <a class="btn btn-primary" th:href="@{/admin/articles/new}">Add New Article</a>
+            <form method="post" th:action="@{/logout}" class="d-inline">
+                <button type="submit" class="btn btn-outline-secondary">Đăng xuất</button>
+            </form>
+        </div>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Ngày xuất bản</th>
+            <th>Hành động</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="article : ${articles}">
+            <td th:text="${article.title}"></td>
+            <td th:text="${article.publishedDate}"></td>
+            <td>
+                <a class="btn btn-sm btn-secondary" th:href="@{/admin/articles/{id}/edit(id=${article.id})}">Edit</a>
+                <form method="post" th:action="@{/admin/articles/{id}/delete(id=${article.id})}" class="d-inline"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
 </main>
 </body>
 </html>
